@@ -1,0 +1,97 @@
+---
+title: "Quiniela_Apertura_2021"
+author: "J Cuamatzi"
+date: '`r format(Sys.Date())`'
+output: html_document
+---
+``` {css Colors, echo = F}
+# Hoja de estilos
+h1 {color: darkred;}
+h2 {color: darkblue;}
+h3 {color: darkgreen;}
+```
+
+# Quiniela de la poderosa Liga Mx
+
+## Torneo: Apertura 2021
+
+```{r libraries, include=FALSE}
+library(readxl)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(knitr)
+library(plotly)
+library(stringr)
+```
+
+```{r, include=FALSE, warning=F}
+path = "C:/Users/SilverStone/Documents/Quiniela_2021/Quiniela_2021/"
+file = "Quiniela_2021.xlsx"
+Jornada = 'J1'
+
+data <- read_xlsx(paste(path,file, sep =""),
+                  range = "Jornadas!A1:L10")
+data <- data %>% 
+  mutate(Aciertos_Marcador_Jorge = if_else(Marcador == Marcador_Jorge, 1, 0),
+         Aciertos_Resultados_Jorge = if_else(Resultado == Pronóstico_Jorge, 1, 0),
+         Aciertos_Marcador_José = if_else(Marcador == Marcador_José, 1, 0),
+         Aciertos_Resultados_José = if_else(Resultado == Pronóstico_José, 1, 0),
+         Aciertos_Marcador_Gilberto = if_else(Marcador == Marcador_Gilberto, 1, 0),
+         Aciertos_Resultados_Gilberto = if_else(Resultado == Pronóstico_Gilberto, 1, 0))
+
+Resultados_parciales <- ddply(data, c("Jornada"), summarise,
+               Jorge_Marcador = sum(Aciertos_Marcador_Jorge),
+               Jorge_Resultados = sum(Aciertos_Resultados_Jorge),
+               José_Marcador = sum(Aciertos_Marcador_José),
+               José_Resultados = sum(Aciertos_Resultados_José),
+               Gilberto_Marcador = sum(Aciertos_Marcador_Gilberto),
+               Gilberto_Resultados = sum(Aciertos_Resultados_Gilberto)) %>% 
+  pivot_longer(cols = c(Jorge_Marcador,Jorge_Resultados,
+                      José_Marcador,José_Resultados,
+                      Gilberto_Marcador,Gilberto_Resultados),
+               names_to = "Participante",
+               values_to = "Aciertos") %>% 
+  separate(Participante, c("Participante","Categoría"))
+
+#Resultados_totales <- aggregate(Resultados_parciales$Aciertos,by=list(Participante=c(Resultados_parciales$Participante,Resultados_parciales$Categoría)),FUN=sum)
+#names(Resultados_totales)[2] <- "Aciertos"
+
+
+```
+
+### Resultados de la `Jornada 1`
+
+```{r Resultados de la jornada, echo = F, warning=F}
+result.jornada <- data[grep(Jornada,data$Jornada),1:6]
+
+knitr::kable(result.jornada)
+
+```
+
+### Resultados de la Quiniela en la `Jornada 1`
+
+```{r Resultados quiniela, echo = F, warning=F}
+knitr::kable(Resultados_parciales)
+
+plot_ly(Resultados_parciales, x =~Participante,y=~Aciertos,
+        type = 'bar',
+        color = ~Categoría) %>% 
+  layout(title = paste('<b>Resultados de la ', Jornada, '</b>', sep = " "),
+         titlefont = list(color = 'darkred'))
+
+#Resultados_parciales %>% group_by(Jornada) %>% do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>% subplot(nrows = 1, shareX = T, shareY = T)%>% layout(showlegend = FALSE)
+
+#plot_ly(Resultados_parciales, x =~Jornada,y=~Aciertos, color =~Participante,type = 'scatter', mode = 'lines')
+
+#plot_ly(Resultados_totales, x = ~Participante, y =~Aciertos,type = 'bar')
+rm(list=ls())
+```
+
+
+
+
+
+
+
+
