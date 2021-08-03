@@ -23,15 +23,22 @@ library(tidyverse)
 library(knitr)
 library(plotly)
 library(stringr)
+library(kableExtra)
 ```
 
 ```{r, include=FALSE, warning=F}
-path = "C:/Users/SilverStone/Documents/Quiniela_2021/Quiniela_2021/"
+#Path Jorge:
+path = "C:/Users/SilverStone/OneDrive/Jorge LCF/Quiniela/Apertura_2021/Quiniela_2021/"
+#Path José:
+#path = "~/Apertura_2021/Quiniela_2021/"
+#Path Gil:
+#path = "~/Apertura_2021/Quiniela_2021/"
+
 file = "Quiniela_2021.xlsx"
-Jornada = 'J1'
+Jornada_Actual = 'J2'
 
 data <- read_xlsx(paste(path,file, sep =""),
-                  range = "Jornadas!A1:L10")
+                  range = "Jornadas!A1:L19")
 data <- data %>% 
   mutate(Aciertos_Marcador_Jorge = if_else(Marcador == Marcador_Jorge, 1, 0),
          Aciertos_Resultados_Jorge = if_else(Resultado == Pronóstico_Jorge, 1, 0),
@@ -53,45 +60,110 @@ Resultados_parciales <- ddply(data, c("Jornada"), summarise,
                names_to = "Participante",
                values_to = "Aciertos") %>% 
   separate(Participante, c("Participante","Categoría"))
-
-#Resultados_totales <- aggregate(Resultados_parciales$Aciertos,by=list(Participante=c(Resultados_parciales$Participante,Resultados_parciales$Categoría)),FUN=sum)
-#names(Resultados_totales)[2] <- "Aciertos"
-
-
 ```
 
-### Resultados de la `Jornada 1`
+### Resultados de la `Jornada 2`
 
 ```{r Resultados de la jornada, echo = F, warning=F}
-result.jornada <- data[grep(Jornada,data$Jornada),1:6]
+result.jornada <- data[grep(Jornada_Actual,data$Jornada),] 
 
-knitr::kable(result.jornada)
+result.jornada[,1:12] %>% 
+  kbl() %>% 
+  kable_paper(full_width = F) %>% 
+  #Jorge
+  column_spec(7, color = "white",
+              background = spec_color(result.jornada$Aciertos_Marcador_Jorge[1:9], 
+                                      end = 0.5, option = "D")) %>% 
+  column_spec(8, color = "white",
+              background = spec_color(result.jornada$Aciertos_Resultados_Jorge[1:9], 
+                                      end = 0.5, option = "D")) %>%
+  #José
+  column_spec(9, color = "white",
+              background = spec_color(result.jornada$Aciertos_Marcador_José[1:9], 
+                                      end = 0.5, option = "D")) %>% 
+  column_spec(10, color = "white",
+              background = spec_color(result.jornada$Aciertos_Resultados_José[1:9], 
+                                      end = 0.5, option = "D")) %>% 
+  #Gilberto
+  column_spec(11, color = "white",
+              background = spec_color(result.jornada$Aciertos_Marcador_Gilberto[1:9], 
+                                      end = 0.5, option = "D")) %>% 
+  column_spec(12, color = "white",
+              background = spec_color(result.jornada$Aciertos_Resultados_Gilberto[1:9], 
+                                      end = 0.5, option = "D"))
+
 
 ```
 
-### Resultados de la Quiniela en la `Jornada 1`
+## Resultados de la Quiniela en la `Jornada 2`
 
 ```{r Resultados quiniela, echo = F, warning=F}
-knitr::kable(Resultados_parciales)
 
-plot_ly(Resultados_parciales, x =~Participante,y=~Aciertos,
+Resultados_parciales[grep(Jornada_Actual,Resultados_parciales$Jornada),] %>% 
+  kbl() %>% 
+  kable_paper(full_width = F) %>% 
+  column_spec(1, bold = T, border_right = F) %>% 
+  column_spec(2, bold = T, border_right = T) %>% 
+  row_spec(1:2, color = "black", background = "lightblue") %>% 
+  row_spec(3:4, color = "black", background = "lightgreen") %>% 
+  row_spec(5:6, color = "black", background = "lightyellow")
+df <- Resultados_parciales[grep(Jornada_Actual,Resultados_parciales$Jornada),]
+plot_ly(df, x =~Participante,y=~Aciertos,
         type = 'bar',
         color = ~Categoría) %>% 
-  layout(title = paste('<b>Resultados de la ', Jornada, '</b>', sep = " "),
+  layout(title = paste('<b>Resultados de la ', Jornada_Actual, '</b>', sep = " "),
          titlefont = list(color = 'darkred'))
 
-#Resultados_parciales %>% group_by(Jornada) %>% do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>% subplot(nrows = 1, shareX = T, shareY = T)%>% layout(showlegend = FALSE)
 
-#plot_ly(Resultados_parciales, x =~Jornada,y=~Aciertos, color =~Participante,type = 'scatter', mode = 'lines')
+Marcador <- Resultados_parciales[grep("Marcador", Resultados_parciales$Categoría),]
+Marcador %>% 
+  group_by(Jornada) %>% 
+  do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>%
+  subplot(nrows = 1, shareX = T, shareY = T) %>% 
+  layout(showlegend = F, title ="<b>Aciertos en marcador por jornada</b>")
 
-#plot_ly(Resultados_totales, x = ~Participante, y =~Aciertos,type = 'bar')
-rm(list=ls())
+Resultados <- Resultados_parciales[grep("Resultados", Resultados_parciales$Categoría),]
+Resultados %>% 
+  group_by(Jornada) %>% 
+  do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>%
+  subplot(nrows = 1, shareX = T, shareY = T) %>% 
+  layout(showlegend = F, title ="<b>Aciertos en resultados por jornada</b>")
+
+
 ```
 
+## Resultados totales
 
+```{r Resultados totales, echo = F, warning=F}
+# Resultados totales en marcador
+Resultados_totales_Marcador <- Marcador %>% 
+  group_by(Participante) %>% 
+  summarise(Marcador = sum(Aciertos))
 
+Resultados_totales_Resultados <- Resultados %>% 
+  group_by(Participante) %>% 
+  summarise(Resultados = sum(Aciertos))
 
+Resultados_totales <- Resultados_totales_Resultados %>% 
+  left_join(select(Resultados_totales_Marcador, Marcador, Participante),
+            by = c("Participante" = "Participante"))
+Resultados_totales %>% 
+  kbl() %>% 
+  kable_paper(full_width = F) %>% 
+  column_spec(1, bold = T, border_right = F) %>% 
+  row_spec(1, color = "black", background = "lightblue") %>% 
+  row_spec(2, color = "black", background = "lightgreen") %>% 
+  row_spec(3, color = "black", background = "lightyellow")
 
+df <- Resultados_totales %>% 
+  pivot_longer(cols = c(Resultados, Marcador),
+               names_to = "Categoría",
+               values_to = "Aciertos")
+plot_ly(df, x =~Participante,y=~Aciertos,
+        type = 'bar',
+        color = ~Categoría) %>% 
+  layout(title = paste('<b>Resultados totales</b>', sep = " "),
+         titlefont = list(color = 'darkred'))
 
-
-
+rm(list = ls())
+```
