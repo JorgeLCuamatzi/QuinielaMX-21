@@ -35,10 +35,10 @@ path = "C:/Users/SilverStone/OneDrive/Jorge LCF/Quiniela/Apertura_2021/Quiniela_
 #path = "~/Apertura_2021/Quiniela_2021/"
 
 file = "Quiniela_2021.xlsx"
-Jornada_Actual = 'J2'
+Jornada_Actual = 'J5'
 
 data <- read_xlsx(paste(path,file, sep =""),
-                  range = "Jornadas!A1:L19")
+                  range = "Jornadas!A1:L45")
 data <- data %>% 
   mutate(Aciertos_Marcador_Jorge = if_else(Marcador == Marcador_Jorge, 1, 0),
          Aciertos_Resultados_Jorge = if_else(Resultado == Pronóstico_Jorge, 1, 0),
@@ -62,7 +62,7 @@ Resultados_parciales <- ddply(data, c("Jornada"), summarise,
   separate(Participante, c("Participante","Categoría"))
 ```
 
-### Resultados de la `Jornada 2`
+### Resultados de la `Jornada 5`
 
 ```{r Resultados de la jornada, echo = F, warning=F}
 result.jornada <- data[grep(Jornada_Actual,data$Jornada),] 
@@ -95,7 +95,7 @@ result.jornada[,1:12] %>%
 
 ```
 
-## Resultados de la Quiniela en la `Jornada 2`
+## Resultados de la Quiniela en la `Jornada 5`
 
 ```{r Resultados quiniela, echo = F, warning=F}
 
@@ -114,22 +114,23 @@ plot_ly(df, x =~Participante,y=~Aciertos,
   layout(title = paste('<b>Resultados de la ', Jornada_Actual, '</b>', sep = " "),
          titlefont = list(color = 'darkred'))
 
+Resultados <- Resultados_parciales[grep("Resultados", Resultados_parciales$Categoría),]
+#Resultados %>% group_by(Jornada) %>% do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>% subplot(nrows = 1, shareX = T, shareY = T) %>% layout(showlegend = F, title ="<b>Aciertos en resultados por jornada</b>")
+
+plot_ly(Resultados, x = ~Jornada, y = ~Aciertos,
+        type = 'scatter',
+        mode = 'lines',
+        color = ~Participante) %>% 
+  layout(title = "<b>Aciertos en resultados por jornada</b>")
 
 Marcador <- Resultados_parciales[grep("Marcador", Resultados_parciales$Categoría),]
-Marcador %>% 
-  group_by(Jornada) %>% 
-  do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>%
-  subplot(nrows = 1, shareX = T, shareY = T) %>% 
-  layout(showlegend = F, title ="<b>Aciertos en marcador por jornada</b>")
+#Marcador %>% group_by(Jornada) %>% do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>% subplot(nrows = 1, shareX = T, shareY = T) %>% layout(showlegend = F, title ="<b>Aciertos en marcador por jornada</b>")
 
-Resultados <- Resultados_parciales[grep("Resultados", Resultados_parciales$Categoría),]
-Resultados %>% 
-  group_by(Jornada) %>% 
-  do(p=plot_ly(., x =~Jornada,y=~Aciertos, color = ~Participante, type = 'bar')) %>%
-  subplot(nrows = 1, shareX = T, shareY = T) %>% 
-  layout(showlegend = F, title ="<b>Aciertos en resultados por jornada</b>")
-
-
+plot_ly(Marcador, x = ~Jornada, y = ~Aciertos,
+        type = 'scatter',
+        mode = 'lines',
+        color = ~Participante) %>% 
+  layout(title = "<b>Aciertos en marcador por jornada</b>")
 ```
 
 ## Resultados totales
